@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracker</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0F0F0F">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-512.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #0F0F0F;
+    --card: #202020;
+    --card2: #202020;
+    --border: #2C2C2C;
+    --text: #F8F8F8;
+    --muted: #8B8B8B;
+    --accent: #5DD62C;
+    --accent-dim: #337418;
+    --ring-track: #333333;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    padding-bottom: 100px;
+  }
+  header {
+    padding: 24px 18px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  h1 {
+    font-size: 30px;
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 21px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+  }
+  .header-actions { display: flex; gap: 10px; }
+
+  main { padding: 4px 16px; max-width: 480px; margin: 0 auto; }
+
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 18px;
+    position: relative;
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .ring {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    position: relative;
+  }
+  .ring svg { position: absolute; top: 0; left: 0; }
+  .ring-label { position: relative; z-index: 1; }
+
+  .dots-icon { color: var(--muted); font-size: 16px; letter-spacing: 1px; }
+
+  .big-num { font-size: 30px; font-weight: 700; line-height: 1; }
+  .big-num .unit { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+
+  .card-label { font-size: 14px; font-weight: 600; margin-top: 14px; }
+  .card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .task-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+  .task-check {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--ring-track);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 900;
+    color: transparent;
+  }
+  .task-check.done { background: var(--accent); border-color: var(--accent); color: #0F0F0F; }
+  .task-info { flex: 1; }
+  .task-name { font-size: 14px; font-weight: 600; }
+  .task-name.done-text { color: #6B6B6B; text-decoration: line-through; }
+  .task-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .section-header { display: flex; justify-content: space-between; align-items: center; }
+  .section-title { font-size: 15px; font-weight: 700; }
+  .section-tag {
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 4px 10px;
+    border-radius: 10px;
+  }
+
+  .volume-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 18px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .volume-left .card-label { margin-top: 4px; }
+
+  /* Month calendar (Streak screen) */
+  .month-calendar-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 22px 18px;
+    margin-bottom: 12px;
+  }
+  .month-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .month-nav-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .month-cal-title { font-size: 17px; font-weight: 700; }
+  .weekday-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 10px;
+  }
+  .weekday-row span {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    row-gap: 6px;
+  }
+  .day-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+  }
+  .day-num {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .day-num.muted-day { color: #4A4A4A; }
+  .day-num.has-progress { background: var(--accent-dim); }
+  .day-num.selected { background: var(--accent); color: #0F0F0F; }
+  .day-num.today-marker { box-shadow: inset 0 0 0 1.5px var(--muted); }
+
+  .calendar-page-title {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 4px 4px 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Bottom sheet */
+  .sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 50;
+  }
+  .sheet-overlay.open { opacity: 1; pointer-events: auto; }
+  .sheet {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 26px 26px 0 0;
+    padding: 14px 20px 28px;
+    width: 100%;
+    max-width: 480px;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+  }
+  .sheet-overlay.open .sheet { transform: translateY(0); }
+  .sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 18px;
+  }
+  .sheet-date { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+  .sheet-sub { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .sheet-top-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .sheet-ring-num { font-size: 13px; }
+  .sheet-stats { flex: 1; }
+  .sheet-stat-num { font-size: 26px; font-weight: 700; }
+  .sheet-stat-label { font-size: 12px; color: var(--muted); }
+  .sheet-open-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0F0F0F;
+    border: none;
+    border-radius: 16px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    margin-top: 4px;
+  }
+  .sheet-close-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    margin-top: 8px;
+  }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 6px;
+    display: flex;
+    gap: 4px;
+    z-index: 20;
+  }
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 11px 20px;
+    border-radius: 24px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-btn .nav-icon { font-size: 15px; line-height: 1; }
+  .nav-btn.active { background: var(--accent); color: #0F0F0F; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .loading { text-align: center; color: var(--muted); padding: 40px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="title">Tracker</h1>
+  <div class="header-actions">
+    <div class="icon-btn">⚙</div>
+  </div>
+</header>
+
+<main id="home" class="screen active">
+  <div class="loading">Loading...</div>
+</main>
+
+<main id="calendarScreen" class="screen">
+  <div class="calendar-page-title">Your Streak</div>
+  <div class="month-calendar-card">
+    <div class="month-cal-header">
+      <button class="month-nav-btn" id="prevMonth">‹</button>
+      <div class="month-cal-title" id="monthCalTitle">—</div>
+      <button class="month-nav-btn" id="nextMonth">›</button>
+    </div>
+    <div class="weekday-row">
+      <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+    </div>
+    <div class="days-grid" id="daysGrid"></div>
+  </div>
+</main>
+
+<div class="sheet-overlay" id="sheetOverlay">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-date" id="sheetDate">—</div>
+    <div class="sheet-sub" id="sheetSub">—</div>
+    <div class="sheet-top-row">
+      <div class="ring" id="sheetRing"></div>
+      <div class="sheet-stats">
+        <div class="sheet-stat-num" id="sheetStatNum">0%</div>
+        <div class="sheet-stat-label" id="sheetStatLabel">Complete</div>
+      </div>
+    </div>
+    <button class="sheet-close-btn" id="sheetCloseBtn">Close</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-tab="home"><span class="nav-icon">⌂</span> Home</button>
+  <button class="nav-btn" data-tab="calendarScreen"><span class="nav-icon">▦</span> Streak</button>
+</nav>
+
+<script>
+const WORKOUT_DAYS = [1, 3, 5]; // Mon, Wed, Fri
+
+const MORNING_TASKS = [
+  { id: 'wall_stand', name: 'Wall stand', meta: '2 min' },
+  { id: 'cat_cow', name: 'Cat-cow stretch', meta: '10 reps' },
+  { id: 'cobra', name: 'Cobra stretch', meta: '30 sec x 2' },
+  { id: 'chin_tuck', name: 'Chin tucks', meta: '10 reps' },
+];
+
+const WORKOUT_TASKS = [
+  { id: 'warmup', name: 'Warm-up', meta: '5 min' },
+  { id: 'pushup', name: 'Pushups', meta: '3 x 8-12' },
+  { id: 'rows', name: 'Australian rows', meta: '3 x 8-10' },
+  { id: 'squats', name: 'Bodyweight squats', meta: '3 x 15' },
+  { id: 'lunges', name: 'Lunges', meta: '3 x 10 each leg' },
+  { id: 'plank', name: 'Plank', meta: '3 x 20-30 sec' },
+  { id: 'leg_raise', name: 'Leg raises', meta: '3 x 10' },
+  { id: 'superman', name: 'Superman hold', meta: '3 x 15 sec' },
+];
+
+const RECOVERY_TASKS = [
+  { id: 'walk', name: 'Morning walk', meta: '20-30 min' },
+  { id: 'stretch', name: 'Stretching', meta: '10 min' },
+];
+
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// Local-date formatting (avoids UTC/timezone shift bugs from toISOString)
+function formatDateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function isWorkoutDay(d) { return WORKOUT_DAYS.includes(d.getDay()); }
+function tasksFor(d) {
+  return isWorkoutDay(d) ? [...MORNING_TASKS, ...WORKOUT_TASKS] : [...MORNING_TASKS, ...RECOVERY_TASKS];
+}
+function sameDay(a, b) { return formatDateKey(a) === formatDateKey(b); }
+function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+
+let currentDate = new Date();
+let currentData = {};
+let viewMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+let sheetDate = null;
+
+const home = document.getElementById('home');
+const daysGrid = document.getElementById('daysGrid');
+const monthCalTitle = document.getElementById('monthCalTitle');
+const sheetOverlay = document.getElementById('sheetOverlay');
+const sheetDateEl = document.getElementById('sheetDate');
+const sheetSub = document.getElementById('sheetSub');
+const sheetRing = document.getElementById('sheetRing');
+const sheetStatNum = document.getElementById('sheetStatNum');
+const sheetStatLabel = document.getElementById('sheetStatLabel');
+const sheetCloseBtn = document.getElementById('sheetCloseBtn');
+const prevMonthBtn = document.getElementById('prevMonth');
+const nextMonthBtn = document.getElementById('nextMonth');
+
+function switchTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  if (tab === 'calendarScreen') {
+    renderMonthCalendar(viewMonth);
+  }
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+prevMonthBtn.addEventListener('click', () => {
+  viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1);
+  renderMonthCalendar(viewMonth);
+});
+nextMonthBtn.addEventListener('click', () => {
+  viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1);
+  renderMonthCalendar(viewMonth);
+});
+
+async function loadDay(date) {
+  const key = `day:${formatDateKey(date)}`;
+  home.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const raw = localStorage.getItem(key);
+    currentData = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    currentData = {};
+  }
+  await render(date);
+}
+
+async function saveDay(date, data) {
+  const key = `day:${formatDateKey(date)}`;
+  try { localStorage.setItem(key, JSON.stringify(data)); }
+  catch (e) { console.error(e); }
+}
+
+function getDataFor(date) {
+  const key = `day:${formatDateKey(date)}`;
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+
+function ringSvg(pct, size) {
+  const r = (size - 4) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c - (pct / 100) * c;
+  return `<svg width="${size}" height="${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${'#333333'}" stroke-width="3" fill="none"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="#5DD62C" stroke-width="3" fill="none"
+      stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"
+      transform="rotate(-90 ${size/2} ${size/2})"/>
+  </svg>`;
+}
+
+async function render(date) {
+  const tasks = tasksFor(date);
+  const doneCount = tasks.filter(t => currentData[t.id]).length;
+  const pct = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
+  const workoutDay = isWorkoutDay(date);
+
+  let html = '';
+
+  html += `<div class="row-2">
+    <div class="card">
+      <div class="card-top">
+        <div class="ring">
+          ${ringSvg(pct, 46)}
+          <div class="ring-label">${doneCount}</div>
+        </div>
+        <div class="dots-icon">⋮</div>
+      </div>
+      <div class="card-label">${workoutDay ? 'Workout Day' : 'Recovery Day'}</div>
+      <div class="card-sub">${doneCount}/${tasks.length} done</div>
+    </div>
+    <div class="card">
+      <div class="card-top">
+        <div class="big-num">${pct}<span class="unit">%</span></div>
+        <div class="dots-icon">⋮</div>
+      </div>
+      <div class="card-label">Today's Progress</div>
+      <div class="card-sub" id="lastUpdated">—</div>
+    </div>
+  </div>`;
+
+  html += `<div class="card" style="margin-bottom:12px;">
+    <div class="section-header">
+      <div class="section-title">${workoutDay ? '💪 Workout' : '🚶 Recovery'}</div>
+      <div class="section-tag">${doneCount}/${tasks.length}</div>
+    </div>
+    <div class="divider"></div>`;
+
+  tasks.forEach(t => {
+    const done = !!currentData[t.id];
+    html += `<div class="task-row" id="task_${t.id}">
+      <div class="task-check ${done ? 'done' : ''}">${done ? '✓' : ''}</div>
+      <div class="task-info">
+        <div class="task-name ${done ? 'done-text' : ''}">${t.name}</div>
+        <div class="task-sub">${t.meta}</div>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+
+  const weeklyPct = weeklyCompletionPct(date);
+  html += `<div class="volume-card">
+    <div class="volume-left">
+      <div class="card-sub">Last 7 days</div>
+      <div class="card-label" style="margin-top:6px; font-size:18px;">${weeklyPct}<span style="color:var(--muted); font-size:12px; margin-left:4px;">% avg</span></div>
+    </div>
+    <div class="dots-icon">⋮</div>
+  </div>`;
+
+  home.innerHTML = html;
+
+  tasks.forEach(t => {
+    document.getElementById('task_' + t.id).addEventListener('click', () => toggleTask(t.id));
+  });
+}
+
+async function toggleTask(id) {
+  currentData[id] = !currentData[id];
+  await saveDay(currentDate, currentData);
+  render(currentDate);
+}
+
+function weeklyCompletionPct(centerDate) {
+  let total = 0, sum = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(centerDate);
+    d.setDate(d.getDate() - i);
+    if (startOfDay(d) > startOfDay(new Date())) continue;
+    const data = getDataFor(d);
+    const dTasks = tasksFor(d);
+    const dDone = dTasks.filter(t => data[t.id]).length;
+    sum += (dDone / dTasks.length) * 100;
+    total++;
+  }
+  return total ? Math.round(sum / total) : 0;
+}
+
+function renderMonthCalendar(month) {
+  monthCalTitle.textContent = `${MONTH_NAMES[month.getMonth()]} ${month.getFullYear()}`;
+
+  const firstOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  // JS getDay(): 0=Sun..6=Sat. We want Monday-first index: 0=Mon..6=Sun
+  const firstWeekday = (firstOfMonth.getDay() + 6) % 7;
+
+  const prevMonthDate = new Date(month.getFullYear(), month.getMonth(), 0);
+  const daysInPrevMonth = prevMonthDate.getDate();
+
+  const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
+  const today = startOfDay(new Date());
+
+  let html = '';
+  for (let i = 0; i < totalCells; i++) {
+    let cellDate, muted = false;
+    if (i < firstWeekday) {
+      cellDate = new Date(month.getFullYear(), month.getMonth() - 1, daysInPrevMonth - firstWeekday + i + 1);
+      muted = true;
+    } else if (i >= firstWeekday + daysInMonth) {
+      cellDate = new Date(month.getFullYear(), month.getMonth() + 1, i - firstWeekday - daysInMonth + 1);
+      muted = true;
+    } else {
+      cellDate = new Date(month.getFullYear(), month.getMonth(), i - firstWeekday + 1);
+    }
+
+    const key = formatDateKey(cellDate);
+    let hasProgress = false;
+    if (!muted && startOfDay(cellDate) <= today) {
+      const data = getDataFor(cellDate);
+      const dTasks = tasksFor(cellDate);
+      const dDone = dTasks.filter(t => data[t.id]).length;
+      hasProgress = dDone > 0;
+    }
+    const isToday = sameDay(cellDate, today);
+    const isSelected = sheetDate && sameDay(cellDate, sheetDate);
+
+    let classes = 'day-num';
+    if (muted) classes += ' muted-day';
+    if (hasProgress && !muted) classes += ' has-progress';
+    if (isSelected) classes += ' selected';
+    if (isToday && !isSelected) classes += ' today-marker';
+
+    html += `<div class="day-cell"><div class="${classes}" data-date="${key}">${cellDate.getDate()}</div></div>`;
+  }
+
+  daysGrid.innerHTML = html;
+
+  daysGrid.querySelectorAll('.day-num').forEach(el => {
+    el.addEventListener('click', () => openSheetForDate(new Date(el.dataset.date)));
+  });
+}
+
+function openSheetForDate(date) {
+  sheetDate = date;
+  const data = getDataFor(date);
+  const tasks = tasksFor(date);
+  const doneCount = tasks.filter(t => data[t.id]).length;
+  const pct = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
+  const workoutDay = isWorkoutDay(date);
+
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  sheetDateEl.textContent = `${dayNames[date.getDay()]}, ${date.getDate()} ${MONTH_NAMES[date.getMonth()].slice(0,3)}`;
+  sheetSub.textContent = workoutDay ? 'Workout Day' : 'Recovery Day';
+  sheetRing.innerHTML = ringSvg(pct, 46) + `<div class="ring-label sheet-ring-num">${doneCount}</div>`;
+  sheetStatNum.textContent = `${pct}%`;
+  sheetStatLabel.textContent = `${doneCount}/${tasks.length} tasks done`;
+
+  renderMonthCalendar(viewMonth);
+  sheetOverlay.classList.add('open');
+}
+
+function closeSheet() {
+  sheetOverlay.classList.remove('open');
+  sheetDate = null;
+  renderMonthCalendar(viewMonth);
+}
+
+sheetCloseBtn.addEventListener('click', closeSheet);
+sheetOverlay.addEventListener('click', (e) => {
+  if (e.target === sheetOverlay) closeSheet();
+});
+
+loadDay(currentDate);
+</script>
+
+</body>
+</html>
